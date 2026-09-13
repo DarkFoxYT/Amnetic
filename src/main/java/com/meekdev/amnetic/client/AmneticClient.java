@@ -157,6 +157,7 @@ public class AmneticClient implements ClientModInitializer {
         AmneticResources.register(VolumetricPass.INSTANCE::dispose);
         AmneticResources.register(Ssr::dispose);
         AmneticResources.register(Taa::dispose);
+        AmneticResources.register(Bloom::dispose);
         AmneticResources.register(Ssao::dispose);
         AmneticResources.register(Ssgi::dispose);
         AmneticResources.register(EnvProbe.INSTANCE::dispose);

@@ -12,6 +12,10 @@ public final class MainTargetFramebuffer {
 
     private static int fbo;
     private static int depthOverride;
+    private static GpuTexture attachedColor;
+    private static GpuTexture attachedDepth;
+    private static int attachedColorId = -1;
+    private static int attachedDepthId = -1;
 
     private static final int[] SAVED_VIEWPORT = new int[4];
 
@@ -37,11 +41,18 @@ public final class MainTargetFramebuffer {
         int previousFbo = GlStateManager.getFrameBuffer(GL30.GL_DRAW_FRAMEBUFFER);
 
         if (fbo == 0) fbo = GL30.glGenFramebuffers();
-        // re-attach every bind: GL reuses freed texture ids after a resize, so an id-equality cache can keep us
-        // pointing at stale storage (model/effects rendered into limbo after going fullscreen). cheap + correct
         GlStateManager._glBindFramebuffer(GL30.GL_FRAMEBUFFER, fbo);
-        GL30.glFramebufferTexture2D(GL30.GL_FRAMEBUFFER, GL30.GL_COLOR_ATTACHMENT0, GL11.GL_TEXTURE_2D, colorId, 0);
-        GL30.glFramebufferTexture2D(GL30.GL_FRAMEBUFFER, GL30.GL_DEPTH_ATTACHMENT, GL11.GL_TEXTURE_2D, depthId, 0);
+        if (color != attachedColor || depth != attachedDepth
+                || colorId != attachedColorId || depthId != attachedDepthId) {
+            GL30.glFramebufferTexture2D(GL30.GL_FRAMEBUFFER, GL30.GL_COLOR_ATTACHMENT0,
+                    GL11.GL_TEXTURE_2D, colorId, 0);
+            GL30.glFramebufferTexture2D(GL30.GL_FRAMEBUFFER, GL30.GL_DEPTH_ATTACHMENT,
+                    GL11.GL_TEXTURE_2D, depthId, 0);
+            attachedColor = color;
+            attachedDepth = depth;
+            attachedColorId = colorId;
+            attachedDepthId = depthId;
+        }
 
         // viewport to restore is always the main target's full size, derive it instead of querying GL
         SAVED_VIEWPORT[0] = 0;
