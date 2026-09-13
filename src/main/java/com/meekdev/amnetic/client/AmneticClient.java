@@ -3,6 +3,7 @@ package com.meekdev.amnetic.client;
 import com.meekdev.amnetic.client.anim.Animations;
 import com.meekdev.amnetic.client.bloom.Bloom;
 import com.meekdev.amnetic.client.compute.ComputeCapabilities;
+import com.meekdev.amnetic.client.compat.IrisCompat;
 import com.meekdev.amnetic.client.decal.Decals;
 import com.meekdev.amnetic.client.dev.PostShaderReload;
 import com.meekdev.amnetic.client.dev.ShaderHotReload;
@@ -88,6 +89,14 @@ public class AmneticClient implements ClientModInitializer {
 
         int snapshotDepth = SceneDepth.snapshotDepthGlId();
         FrameContext fc = new FrameContext(CameraSnapshot.current(), ctx, snapshotDepth);
+
+        // Iris writes its final composite at LevelRenderer's tail.
+        if (IrisCompat.isShaderPackInUse()) {
+            GBuffer.beginFrame();
+            Pipeline.runStage(RenderStage.GEOMETRY, fc);
+            Pipeline.runStage(RenderStage.LIGHTING, fc);
+            Pipeline.runStage(RenderStage.SCREEN_SPACE, fc);
+        }
 
         if (snapshotDepth > 0) MainTargetFramebuffer.setDepthOverride(snapshotDepth);
         Pipeline.runStage(RenderStage.AFTER_WATER, fc);
@@ -182,7 +191,7 @@ public class AmneticClient implements ClientModInitializer {
         registerDefaultPasses();
 
         LevelRenderEvents.BEFORE_TRANSLUCENT_TERRAIN.register(ctx -> {
-            if (CaptureManager.INSTANCE.isCapturing()) return;
+            if (CaptureManager.INSTANCE.isCapturing() || IrisCompat.isRenderingShadowPass()) return;
             boolean captured = ParticleSimulation.INSTANCE.captureSceneDepth();
             int snapshot = captured ? SceneDepth.snapshotDepthGlId() : 0;
             MainTargetFramebuffer.setDepthOverride(snapshot);
@@ -195,17 +204,19 @@ public class AmneticClient implements ClientModInitializer {
 
         LevelRenderEvents.END_MAIN.register(ctx -> {
             pendingPostCtx = null;
-            if (CaptureManager.INSTANCE.isCapturing()) return;
+            if (CaptureManager.INSTANCE.isCapturing() || IrisCompat.isRenderingShadowPass()) return;
             ModelRegistry.INSTANCE.warmup();
             GlUploadQueue.drain(2_000_000L);
             Animations.update();
             Reactive.tick(surfaceDt());
-            GBuffer.beginFrame();
             FrameContext fc = new FrameContext(CameraSnapshot.current(), ctx, SceneDepth.snapshotDepthGlId());
-            Pipeline.runStage(RenderStage.GEOMETRY, fc);
-            MainTargetFramebuffer.setDepthOverride(0);
-            Pipeline.runStage(RenderStage.LIGHTING, fc);
-            Pipeline.runStage(RenderStage.SCREEN_SPACE, fc);
+            if (!IrisCompat.isShaderPackInUse()) {
+                GBuffer.beginFrame();
+                Pipeline.runStage(RenderStage.GEOMETRY, fc);
+                MainTargetFramebuffer.setDepthOverride(0);
+                Pipeline.runStage(RenderStage.LIGHTING, fc);
+                Pipeline.runStage(RenderStage.SCREEN_SPACE, fc);
+            }
             pendingPostCtx = ctx;
         });
 
