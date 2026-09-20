@@ -229,6 +229,7 @@ public final class InstanceMeshRegistry {
     }
 
     public void reloadShaders() {
+        InstanceMeshEntry.invalidateDepthProgram();
         for (InstanceMeshEntry<?> entry : entries) {
             entry.invalidateShader();
         }
