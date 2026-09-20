@@ -3,11 +3,16 @@ package com.meekdev.amnetic.client.model;
 /**
  * tunable lighting/grading for the glTF model PBR shader, e.g.
  * {@code ModelLighting.INSTANCE.sunIntensity(1.2f).exposure(1.1f);}
+ *
+ * <p>The sun direction set here is the one the whole renderer reads: model shading, instanced
+ * shading and the environment probe. It points towards the sun. A game that never sets it gets
+ * a sun derived from the world's time of day instead.
  */
 public final class ModelLighting {
 
     public static final ModelLighting INSTANCE = new ModelLighting();
 
+    private boolean sunSet;
     private float sunX = 0.35f, sunY = 0.85f, sunZ = 0.40f;
     private float sunR = 1.0f, sunG = 0.97f, sunB = 0.92f;
     private float sunIntensity = 1.0f;
@@ -18,7 +23,8 @@ public final class ModelLighting {
 
     private ModelLighting() {}
 
-    public ModelLighting sunDirection(float x, float y, float z) { sunX = x; sunY = y; sunZ = z; return this; }
+    public ModelLighting sunDirection(float x, float y, float z) { sunX = x; sunY = y; sunZ = z; sunSet = true; return this; }
+    public ModelLighting clearSun() { sunSet = false; return this; }
     public ModelLighting sunColor(float r, float g, float b) { sunR = r; sunG = g; sunB = b; return this; }
     public ModelLighting sunIntensity(float v) { sunIntensity = Math.max(0f, v); return this; }
     public ModelLighting ambientStrength(float v) { ambientStrength = Math.max(0f, v); return this; }
@@ -26,6 +32,7 @@ public final class ModelLighting {
     public ModelLighting exposure(float v) { exposure = Math.max(0.01f, v); return this; }
     public ModelLighting tonemap(boolean v) { tonemap = v; return this; }
 
+    public boolean sunSet() { return sunSet; }
     public float sunX() { return sunX; }
     public float sunY() { return sunY; }
     public float sunZ() { return sunZ; }
