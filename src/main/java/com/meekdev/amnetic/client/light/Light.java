@@ -228,6 +228,16 @@ public final class Light {
         LightRegistry.INSTANCE.remove(this);
     }
 
+    /** False once the light has been removed, or dropped by a resource reload. */
+    public boolean isRegistered() {
+        return !removed;
+    }
+
+    /** Marks the light detached when the registry drops it wholesale. */
+    public void markRemoved() {
+        removed = true;
+    }
+
     public long id() {
         return id;
     }
