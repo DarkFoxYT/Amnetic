@@ -114,6 +114,7 @@ public final class ShadingModelRegistry {
           .append("    float metallic;\n")
           .append("    vec3 radiance;\n") // standard PBR result already computed, for tinting/replacing
           .append("    vec3 lightmap;\n") // vanilla lightmap colour sampled at this fragment
+          .append("    float time;\n") // seconds, wrapping every hour
           .append("};\n\n")
           .append("vec3 shadeCustomMaterial(int materialId, GBufferSample s, out bool handled) {\n")
           .append("    handled = true;\n");
