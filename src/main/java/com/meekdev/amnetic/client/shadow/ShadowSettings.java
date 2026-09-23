@@ -28,6 +28,8 @@ public final class ShadowSettings {
     private float sunSplitLambda = 0.7f;
     private float sunCasterExtension = 64f;
     private float sunBlockOccluderRadius = 48f;
+    private float budgetMs = 0f;
+    private int version;
 
     private ShadowSettings() {}
 
@@ -36,103 +38,140 @@ public final class ShadowSettings {
     }
 
     public ShadowSettings resolution(int px) {
-        this.resolution = clampPow2(px, 256, 2048);
+        int next = clampPow2(px, 256, 2048);
+        if (next != resolution) { resolution = next; version++; }
         return this;
     }
 
     public ShadowSettings maxSpotShadows(int n) {
-        this.maxSpotShadows = Math.max(0, Math.min(MAX_SPOT, n));
+        int next = Math.max(0, Math.min(MAX_SPOT, n));
+        if (next != maxSpotShadows) { maxSpotShadows = next; version++; }
         return this;
     }
 
     public ShadowSettings maxPointShadows(int n) {
-        this.maxPointShadows = Math.max(0, Math.min(MAX_POINT, n));
+        int next = Math.max(0, Math.min(MAX_POINT, n));
+        if (next != maxPointShadows) { maxPointShadows = next; version++; }
         return this;
     }
 
     public ShadowSettings softness(float texels) {
-        this.softness = Math.max(0f, Math.min(8f, texels));
+        float next = Math.max(0f, Math.min(8f, texels));
+        if (next != softness) { softness = next; version++; }
         return this;
     }
 
     public ShadowSettings bias(float b) {
-        this.bias = Math.max(0f, b);
+        float next = Math.max(0f, b);
+        if (next != bias) { bias = next; version++; }
         return this;
     }
 
     public ShadowSettings normalBias(float b) {
-        this.normalBias = Math.max(0f, b);
+        float next = Math.max(0f, b);
+        if (next != normalBias) { normalBias = next; version++; }
         return this;
     }
 
     public ShadowSettings maxDistance(float blocks) {
-        this.maxDistance = Math.max(8f, blocks);
+        float next = Math.max(8f, blocks);
+        if (next != maxDistance) { maxDistance = next; version++; }
         return this;
     }
 
     public ShadowSettings fadeStart(float fraction) {
-        this.fadeStart = Math.max(0f, Math.min(1f, fraction));
+        float next = Math.max(0f, Math.min(1f, fraction));
+        if (next != fadeStart) { fadeStart = next; version++; }
         return this;
     }
 
     public ShadowSettings entityShadows(boolean v) {
-        this.entityShadows = v;
+        boolean next = v;
+        if (next != entityShadows) { entityShadows = next; version++; }
         return this;
     }
 
     public ShadowSettings entityModels(boolean v) {
-        this.entityModels = v;
+        boolean next = v;
+        if (next != entityModels) { entityModels = next; version++; }
         return this;
     }
 
     public ShadowSettings pcss(boolean v) {
-        this.pcss = v;
+        boolean next = v;
+        if (next != pcss) { pcss = next; version++; }
         return this;
     }
 
     public ShadowSettings lightSize(float texels) {
-        this.lightSize = Math.max(0.1f, Math.min(16f, texels));
+        float next = Math.max(0.1f, Math.min(16f, texels));
+        if (next != lightSize) { lightSize = next; version++; }
         return this;
     }
 
     public ShadowSettings bakeBudget(int casters) {
-        this.bakeBudget = Math.max(0, casters);
+        int next = Math.max(0, casters);
+        if (next != bakeBudget) { bakeBudget = next; version++; }
         return this;
     }
 
     public ShadowSettings sunResolution(int px) {
-        this.sunResolution = clampPow2(px, 512, 4096);
+        int next = clampPow2(px, 512, 4096);
+        if (next != sunResolution) { sunResolution = next; version++; }
         return this;
     }
 
     public ShadowSettings sunCascades(int n) {
-        this.sunCascades = Math.max(1, Math.min(MAX_CASCADES, n));
+        int next = Math.max(1, Math.min(MAX_CASCADES, n));
+        if (next != sunCascades) { sunCascades = next; version++; }
         return this;
     }
 
     /** how far from the camera sun shadows reach (far edge of the loosest cascade), in blocks */
     public ShadowSettings sunDistance(float blocks) {
-        this.sunDistance = Math.max(16f, blocks);
+        float next = Math.max(16f, blocks);
+        if (next != sunDistance) { sunDistance = next; version++; }
         return this;
     }
 
     /** practical-split blend: 0 = uniform splits, 1 = fully logarithmic (tight near the camera) */
     public ShadowSettings sunSplitLambda(float lambda) {
-        this.sunSplitLambda = Math.max(0f, Math.min(1f, lambda));
+        float next = Math.max(0f, Math.min(1f, lambda));
+        if (next != sunSplitLambda) { sunSplitLambda = next; version++; }
         return this;
     }
 
     /** extra blocks each cascade reaches toward the sun so tall off-slice geometry still casts */
     public ShadowSettings sunCasterExtension(float blocks) {
-        this.sunCasterExtension = Math.max(0f, blocks);
+        float next = Math.max(0f, blocks);
+        if (next != sunCasterExtension) { sunCasterExtension = next; version++; }
         return this;
     }
 
     /** radius around the camera within which vanilla blocks cast sun shadows, 0 disables block occluders
      * (custom models / instanced meshes still cast at any distance) */
     public ShadowSettings sunBlockOccluderRadius(float blocks) {
-        this.sunBlockOccluderRadius = Math.max(0f, Math.min(96f, blocks));
+        float next = Math.max(0f, Math.min(96f, blocks));
+        if (next != sunBlockOccluderRadius) { sunBlockOccluderRadius = next; version++; }
         return this;
+    }
+
+    /** an opt-in time limit for the shadow bake in milliseconds, 0 = off. over it, the sun's cascades,
+     * resolution and distance are lowered step by step, and raised back once there is room again,
+     * never above what is set here */
+    public ShadowSettings budgetMs(float ms) {
+        float next = Math.max(0f, ms);
+        if (next != budgetMs) { budgetMs = next; version++; }
+        return this;
+    }
+
+    public float budgetMs() {
+        return budgetMs;
+    }
+
+    /** goes up whenever a setting actually changes, so a pass can skip work while it stays put */
+    public int version() {
+        return version;
     }
 
     public int resolution() {
