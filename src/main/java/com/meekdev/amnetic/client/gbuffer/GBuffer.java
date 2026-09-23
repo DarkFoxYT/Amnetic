@@ -25,6 +25,9 @@ public final class GBuffer {
 
     public static int emissiveTextureGlId() { return GBufferTargets.INSTANCE.emissiveGlId(); }
 
+    /** The material colour a forward pass published, so deferred lights shade it instead of the lit frame. */
+    public static int albedoTextureGlId() { return GBufferTargets.INSTANCE.albedoGlId(); }
+
     public static int depthTextureGlId() { return GBufferTargets.INSTANCE.depthGlId(); }
 
     public static void dispose() {

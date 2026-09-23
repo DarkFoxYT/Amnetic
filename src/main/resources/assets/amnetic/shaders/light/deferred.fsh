@@ -157,6 +157,10 @@ void main() {
 
     vec3 V = normalize(-fragPos); // camera at origin in view space
     vec3 albedo = texture(AlbedoSampler, vUV).rgb;
+    // a forward pass can publish its material colour; local lights shade that instead of the lit
+    // frame, so a lamp can still light a surface the daylight left at black
+    vec4 published = texture(GAlbedoSampler, vUV);
+    vec3 material = published.a > 0.5 ? published.rgb : albedo;
 
     if (DebugMode != 0) {
         vec3 dbg = vec3(0.0);
@@ -179,7 +183,7 @@ void main() {
 
     // scene is already day-lit, darken where the sun is occluded, then local lights and specular on top
     float sunMul = clamp(1.0 - sunShadow, 0.0, 1.0);
-    vec3 outColor = albedo * sunMul + albedo * radiance + specular; // god-rays added in a separate pass
+    vec3 outColor = albedo * sunMul + material * radiance + specular; // god-rays added in a separate pass
     outColor = max(outColor, vec3(0.0));
     if (any(isnan(outColor)) || any(isinf(outColor))) outColor = vec3(0.0);
 
