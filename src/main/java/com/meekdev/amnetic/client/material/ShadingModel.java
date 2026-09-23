@@ -26,11 +26,17 @@ public final class ShadingModel {
     private final Base base;
 
     private final boolean owned;
+    private final SurfaceLayout layout;
 
     private ShadingModel(int id, Base base, boolean owned) {
+        this(id, base, owned, SurfaceLayout.EMPTY);
+    }
+
+    private ShadingModel(int id, Base base, boolean owned, SurfaceLayout layout) {
         this.id = id;
         this.base = base;
         this.owned = owned;
+        this.layout = layout;
     }
 
     public static ShadingModel pbr() {
@@ -70,6 +76,23 @@ public final class ShadingModel {
         return target;
     }
 
+    /**
+     * shades the surface as the model is drawn, before lighting, with a GLSL snippet: the body of a
+     * function given {@code inout SurfaceSample s} (uv, albedo, alpha, emission, roughness, metallic,
+     * normal, worldPos, time) that changes what it needs. the snippet may declare its own
+     * {@code uniform}s, which each draw fills through {@link SurfaceInputs}, see {@link #layout()}
+     */
+    public ShadingModel surface(String source) {
+        SurfaceLayout parsed = SurfaceLayout.parse(source);
+        ShadingModel target = owned ? this : register(this::passthrough);
+        ShadingModelRegistry.INSTANCE.attachSurface(target.id, parsed.body());
+        return new ShadingModel(target.id, base, true, parsed);
+    }
+
+    public SurfaceLayout layout() {
+        return layout;
+    }
+
     public ShadingModel vertex(String vertexBody) {
         ShadingModel target = owned ? this : register(this::passthrough);
         ShadingModelRegistry.INSTANCE.attachVertex(target.id, () -> vertexBody);
@@ -85,6 +108,11 @@ public final class ShadingModel {
 
     private String passthrough() {
         return base == Base.FLAT ? "return s.albedo;" : "return s.radiance;";
+    }
+
+    /** gives this model's id back once no material uses it any more; the built-in pbr and flat ones stay */
+    public void release() {
+        if (owned) ShadingModelRegistry.INSTANCE.release(id);
     }
 
     public int id() {
