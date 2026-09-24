@@ -1,4 +1,4 @@
-#version 430 core
+#version 410 core
 
 in vec2 vUV;
 out vec4 FragColor;
@@ -35,20 +35,20 @@ vec3 volumetric(vec3 fragPos) {
 
     vec3 result = vec3(0.0);
     for (int i = 0; i < LightCount; i++) {
-        int type = int(lights[i * 8 + 2].w + 0.5);
+        int type = int(texelFetch(LightTexels, i * 8 + 2).w + 0.5);
         if (type == 2) continue; // directional has no position to sphere-clip against
-        float gstr = lights[i * 8 + 6].z; // per-light strength (0 = no shaft)
+        float gstr = texelFetch(LightTexels, i * 8 + 6).z; // per-light strength (0 = no shaft)
         if (gstr <= 0.0) continue;
 
         // per-light volumetric params (lane 7)
-        int baseSteps = int(lights[i * 8 + 7].x + 0.5);
-        float density = lights[i * 8 + 7].y;
-        float aniso = lights[i * 8 + 7].z;
-        bool lShadows = lights[i * 8 + 7].w > 0.5;
+        int baseSteps = int(texelFetch(LightTexels, i * 8 + 7).x + 0.5);
+        float density = texelFetch(LightTexels, i * 8 + 7).y;
+        float aniso = texelFetch(LightTexels, i * 8 + 7).z;
+        bool lShadows = texelFetch(LightTexels, i * 8 + 7).w > 0.5;
         if (baseSteps <= 0) continue;
 
-        vec3 pos = lights[i * 8 + 0].xyz;
-        float range = lights[i * 8 + 0].w;
+        vec3 pos = texelFetch(LightTexels, i * 8 + 0).xyz;
+        float range = texelFetch(LightTexels, i * 8 + 0).w;
 
         // clip the ray to the light's sphere so we only march where it matters
         vec3 oc = -pos;
@@ -65,12 +65,12 @@ vec3 volumetric(vec3 fragPos) {
         float camDist = length(pos);
         int steps = int(max(4.0, float(baseSteps) * clamp((range * 2.0) / (range * 2.0 + camDist), 0.25, 1.0)));
         float stepLen = (tF - tN) / float(steps);
-        int curve = int(lights[i * 8 + 3].z + 0.5);
-        float param = lights[i * 8 + 3].w;
-        int sref = int(lights[i * 8 + 5].w);
-        vec3 lcol = lights[i * 8 + 1].rgb * lights[i * 8 + 1].w;
-        vec3 spotDir = normalize(lights[i * 8 + 2].xyz);
-        float cosIn = lights[i * 8 + 3].x, cosOut = lights[i * 8 + 3].y;
+        int curve = int(texelFetch(LightTexels, i * 8 + 3).z + 0.5);
+        float param = texelFetch(LightTexels, i * 8 + 3).w;
+        int sref = int(texelFetch(LightTexels, i * 8 + 5).w);
+        vec3 lcol = texelFetch(LightTexels, i * 8 + 1).rgb * texelFetch(LightTexels, i * 8 + 1).w;
+        vec3 spotDir = normalize(texelFetch(LightTexels, i * 8 + 2).xyz);
+        float cosIn = texelFetch(LightTexels, i * 8 + 3).x, cosOut = texelFetch(LightTexels, i * 8 + 3).y;
 
         // front-to-back with beer-lambert extinction so the integral saturates instead of blowing
         // up into a giant blob when the camera sits inside the light's sphere
@@ -177,7 +177,7 @@ void main() {
     for (int i = 0; i < LightCount; i++) {
         // when light volumes are on they shade every non-directional light, so the fullscreen
         // pass only still needs the directional sun (which darkens and cannot be additive)
-        if (SkipLocalLights == 1 && int(lights[i * 8 + 2].w + 0.5) != 2) continue;
+        if (SkipLocalLights == 1 && int(texelFetch(LightTexels, i * 8 + 2).w + 0.5) != 2) continue;
         radiance += lightContribution(i, fragPos, N, V, rough, f0, specular, sunShadow);
     }
 
