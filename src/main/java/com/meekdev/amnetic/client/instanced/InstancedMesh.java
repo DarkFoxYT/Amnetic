@@ -29,6 +29,7 @@ public final class InstancedMesh<T> {
     final RenderState renderState;
     final boolean emissive;
     final float emissiveStrength;
+    final boolean glowsInGBuffer;
     final boolean writeGBuffer;
     final boolean castsShadow;
     final List<CustomUniform> customUniforms;
@@ -58,6 +59,7 @@ public final class InstancedMesh<T> {
         this.flatShaded = b.flatShaded;
         this.emissive = b.emissive;
         this.emissiveStrength = b.emissiveStrength;
+        this.glowsInGBuffer = b.glowsInGBuffer;
         this.writeGBuffer = b.writeGBuffer;
         this.castsShadow = b.castsShadow;
         this.customUniforms = List.copyOf(b.customUniforms);
@@ -96,6 +98,7 @@ public final class InstancedMesh<T> {
     public RenderState renderState() { return renderState; }
     public boolean isEmissive() { return emissive; }
     public float emissiveStrength() { return emissiveStrength; }
+    public boolean glowsInGBuffer() { return glowsInGBuffer; }
     public boolean writeGBuffer() { return writeGBuffer; }
     public boolean castsShadow() { return castsShadow; }
     public List<CustomUniform> customUniforms() { return customUniforms; }
@@ -134,6 +137,7 @@ public final class InstancedMesh<T> {
         private RenderState renderState = RenderState.DEFAULT;
         private boolean emissive = false;
         private float emissiveStrength = 1.0f;
+        private boolean glowsInGBuffer;
         private boolean writeGBuffer = false;
         private boolean castsShadow = false;
         private final List<CustomUniform> customUniforms = new ArrayList<>();
@@ -263,6 +267,11 @@ public final class InstancedMesh<T> {
         public Builder<T> emissive(float strength) {
             this.emissive = true;
             this.emissiveStrength = strength;
+            return this;
+        }
+
+        public Builder<T> glowsInGBuffer() {
+            this.glowsInGBuffer = true;
             return this;
         }
 
