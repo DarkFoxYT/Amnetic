@@ -3,6 +3,10 @@ plugins {
     `maven-publish`
 }
 
+stonecutter {
+    properties.tags(current.project.substringBeforeLast('-'))
+}
+
 version = "${findProperty("mod_version") ?: property("mod.version")}+${sc.current.version}"
 group = property("mod.group") as String
 base.archivesName = property("mod.id") as String
@@ -20,7 +24,6 @@ repositories {
         forRepository { maven("https://maven.ryanhcode.dev/releases") { name = "RyanHCode Maven" } }
         filter { includeGroup("foundry.imguimc") }
     }
-    maven("https://repo.javagl.de/") { name = "javagl Maven" }
 }
 
 dependencies {
@@ -74,20 +77,22 @@ val absentClasses: List<String> = buildList {
     if (sc.current.parsed < "1.20.2") add("mixin/accessor/LevelRendererAccessor")
     if (sc.current.parsed < "1.21.2") addAll(listOf("mixin/EntityRenderStateMixin", "mixin/EntityRendererMixin", "mixin/WeatherEffectRendererMixin"))
     if (sc.current.parsed < "1.21.5") addAll(listOf("mixin/GlCommandEncoderMixin", "client/render/MeshPipeline",
-            "client/entityfx/internal/EntityEffectPipeline", "client/framebuffer/internal/WrappedGlTexture"))
-    if (sc.current.parsed >= "1.21.5") addAll(listOf("mixin/accessor/LightTextureAccessor", "mixin/BufferUploaderMixin"))
+            "client/entityfx/internal/EntityEffectPipeline", "client/framebuffer/internal/WrappedGlTexture",
+            "mixin/accessor/RenderTypeInvoker"))
+    if (sc.current.parsed >= "1.21.5") add("mixin/accessor/LightTextureAccessor")
 }
 
 tasks {
     withType<JavaCompile>().configureEach {
+        exclude("com/meekdev/amnetic/ForgeClientEvents.java")
         for (path in absentClasses) exclude("com/meekdev/amnetic/$path.java")
-        if (sc.current.parsed < "1.21.5") exclude("net/minecraft/client/renderer/rendertype/AmneticRenderTypeAccess.java")
         options.encoding = "UTF-8"
         options.compilerArgs.addAll(listOf("-Xmaxerrs", "100000"))
         options.release = requiredJava.majorVersion.toInt()
     }
 
     processResources {
+        exclude("META-INF/mods.toml")
         inputs.property("absentClasses", absentClasses)
         filesMatching("amnetic.mixins.json") {
             filter { line -> if (absentClasses.any { line.trim().trimEnd(',') == "\"${it.removePrefix("mixin/").replace('/', '.')}\"" }) "" else line }

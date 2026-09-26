@@ -3,7 +3,7 @@ package com.meekdev.amnetic.client.pipeline;
 import com.meekdev.amnetic.client.pipeline.internal.GpuTimer;
 import com.meekdev.amnetic.client.render.CameraSnapshot;
 import com.meekdev.amnetic.client.render.GlState;
-//? if >=1.21 {
+//? if fabric && >=1.21 {
 import com.meekdev.amnetic.client.ui.AmneticEditor;
 //?}
 import org.slf4j.Logger;
@@ -105,7 +105,7 @@ public final class Pipeline {
         if (list.isEmpty()) return;
         // GL_TIME_ELAPSED queries force driver serialization around every pass, only pay that when the
         // profiler inspector is actually open. CPU timing (nanoTime) is cheap and stays on
-        //? if >=1.21 {
+        //? if fabric && >=1.21 {
         boolean gpuProfile = gpuTimings || AmneticEditor.isEnabled();
         //?} else {
         /*boolean gpuProfile = gpuTimings;
