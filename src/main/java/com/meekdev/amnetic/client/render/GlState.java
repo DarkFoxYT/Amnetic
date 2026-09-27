@@ -4,15 +4,19 @@ import com.mojang.blaze3d.opengl.GlStateManager;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL14;
+import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL33;
 
 public final class GlState {
 
     private static final int MAX_UNIT = 3;
 
+    private static final ThreadLocal<java.util.ArrayDeque<Integer>> PREVIOUS_VERTEX_ARRAYS =
+            ThreadLocal.withInitial(java.util.ArrayDeque::new);
     private GlState() {}
 
     public static void beginFullscreen() {
+        PREVIOUS_VERTEX_ARRAYS.get().push(GL11.glGetInteger(GL30.GL_VERTEX_ARRAY_BINDING));
         GlStateManager._disableBlend(); GL11.glDisable(GL11.GL_BLEND);
         GlStateManager._disableDepthTest(); GL11.glDisable(GL11.GL_DEPTH_TEST);
         GlStateManager._depthMask(false); GL11.glDepthMask(false);
@@ -41,7 +45,8 @@ public final class GlState {
         GL13.glActiveTexture(GL13.GL_TEXTURE0);
         GlStateManager._activeTexture(GL13.GL_TEXTURE0);
         GlStateManager._glUseProgram(0);
-        GlStateManager._glBindVertexArray(0);
+        var previousVertexArrays = PREVIOUS_VERTEX_ARRAYS.get();
+        GlStateManager._glBindVertexArray(previousVertexArrays.isEmpty() ? 0 : previousVertexArrays.pop());
         GlStateManager._depthMask(true); GL11.glDepthMask(true);
         GlStateManager._enableDepthTest(); GL11.glEnable(GL11.GL_DEPTH_TEST);
         GlStateManager._enableCull(); GL11.glEnable(GL11.GL_CULL_FACE);
