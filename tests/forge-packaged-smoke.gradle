@@ -1,0 +1,30 @@
+// Use alongside runtime-smoke.gradle in an isolated checkout.
+gradle.beforeProject { project ->
+    project.afterEvaluate {
+        if (project.path != project.findProperty('smoke_project')) return
+        if (!project.plugins.hasPlugin('net.minecraftforge.gradle')) throw new GradleException('This check requires a Forge target')
+        def runDir = project.layout.buildDirectory.dir('packaged-smoke/run')
+        project.minecraft.runs.configureEach {
+            workingDir = runDir
+            mods.clear()
+            extraLibraries.setFrom([])
+        }
+        def prepare = project.tasks.register('preparePackagedSmoke', Copy) {
+            dependsOn project.tasks.named('jarJar')
+            from project.tasks.named('jarJar', Jar).flatMap { it.archiveFile }
+            into runDir.map { it.dir('mods') }
+            doLast {
+                new File(runDir.get().asFile, 'options.txt').text = 'onboardAccessibility:false\nrenderDistance:6\nsimulationDistance:6\nmaxFps:60\n'
+            }
+        }
+        project.tasks.withType(JavaExec).matching { it.name.startsWith('run') }.configureEach {
+            dependsOn prepare
+            def outputDirs = project.sourceSets.main.output.files
+            classpath = project.files(classpath.files.findAll { !outputDirs.contains(it) })
+            if (hasProperty('runtimeClasspath')) {
+                def libraries = runtimeClasspath.files.findAll { !outputDirs.contains(it) }
+                runtimeClasspath.setFrom(libraries)
+            }
+        }
+    }
+}

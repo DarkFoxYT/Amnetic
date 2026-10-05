@@ -1,0 +1,38 @@
+// Opt-in only: ./gradlew :26.1.2-fabric:runClient -I tests/runtime-smoke.gradle -Psmoke_project=:26.1.2-fabric
+gradle.beforeProject { project ->
+    project.afterEvaluate {
+        if (project.path != project.findProperty('smoke_project')) return
+        project.sourceSets.main.java.srcDir(project.rootProject.file('tests/runtime-smoke/java'))
+        project.tasks.named('processResources').configure {
+            inputs.property('runtimeSmoke', true)
+            filesMatching('amnetic.mixins.json') {
+                filter { line -> line.replace('"client": [', '"client": [ "RuntimeSmokeMixin",') }
+            }
+        }
+        boolean world = project.findProperty('smoke_world') == 'true'
+        if (world && project.plugins.hasPlugin('net.neoforged.moddev')) {
+            project.neoForge.runs.configureEach {
+                programArguments.addAll '--quickPlaySingleplayer', 'amnetic-smoke'
+            }
+        } else if (world && project.plugins.hasPlugin('net.minecraftforge.gradle')) {
+            project.minecraft.runs.configureEach {
+                args '--quickPlaySingleplayer', 'amnetic-smoke'
+            }
+        }
+        project.tasks.withType(JavaExec).configureEach {
+            if (!name.startsWith('run')) return
+            systemProperty('amnetic.smoke.world', project.findProperty('smoke_world') ?: 'false')
+            doFirst {
+                def runDir = project.file(project.plugins.hasPlugin('net.neoforged.moddev') ? 'run/client' : 'run')
+                runDir.mkdirs()
+                def options = new File(runDir, 'options.txt')
+                if (!options.exists()) options.text = 'renderDistance:6\nsimulationDistance:6\nmaxFps:60\n'
+                options.text = options.text.replaceAll('(?m)^onboardAccessibility:.*\n?', '') + '\nonboardAccessibility:false\n'
+                options.text = options.text.replaceAll('(?m)^simulationDistance:4\r?$', 'simulationDistance:6')
+            }
+            if (world && !project.plugins.hasPlugin('net.neoforged.moddev') && !project.plugins.hasPlugin('net.minecraftforge.gradle')) {
+                args '--quickPlaySingleplayer', 'amnetic-smoke'
+            }
+        }
+    }
+}
